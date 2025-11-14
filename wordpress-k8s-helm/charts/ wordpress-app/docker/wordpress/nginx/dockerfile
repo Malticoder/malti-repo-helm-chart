@@ -1,1 +1,46 @@
 
+FROM ubuntu:22.04 as build
+
+ENV OPENRESTY_VERSION 1.21.4.1
+ENV PCRE_VERSION 8.45
+ENV LUAJIT_VERSION 2.1-20210510
+
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    build-essential wget curl libpcre3-dev libssl-dev perl make git \
+    zlib1g-dev libreadline-dev libncurses5-dev libxml2-dev libxslt1-dev \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /tmp
+
+RUN wget https://openresty.org/download/openresty-${OPENRESTY_VERSION}.tar.gz \
+ && tar xzf openresty-${OPENRESTY_VERSION}.tar.gz
+
+WORKDIR /tmp/openresty-${OPENRESTY_VERSION}
+
+RUN ./configure --prefix=/opt/openresty \
+    --with-pcre-jit \
+    --with-ipv6 \
+    --without-http_redis2_module \
+    --with-http_iconv_module \
+    --with-http_postgres_module \
+    -j8
+
+
+RUN make -j8 && make install
+
+FROM ubuntu:22.04
+COPY --from=build /opt/openresty /opt/openresty
+
+ENV PATH="/opt/openresty/nginx/sbin:/opt/openresty/bin:${PATH}"
+
+RUN useradd -r -s /sbin/nologin nginx \
+ && mkdir -p /etc/nginx /var/cache/nginx /var/log/nginx /etc/openresty \
+ && chown -R nginx:nginx /var/cache/nginx /var/log/nginx
+
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY lua/ /etc/openresty/lua/
+
+EXPOSE 80 443
+
+CMD ["nginx", "-g", "daemon off;"]
+
