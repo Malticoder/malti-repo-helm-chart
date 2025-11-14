@@ -1,1 +1,26 @@
+wordpress:
+  image: cloudcomputing859/wordpress:latest
+  replicas: 3
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+
+mysql:
+  image: myrepo/mysql:8.0
+  replicas: 1
+  storage:
+    size: 20Gi
+
+nginx:
+  image: cloudcomputing859/nginx-openresty:latest
+  resources: { ... }
+
+persistence:
+  uploads:
+    storageClass: nfs-client
+    size: 20Gi
 
