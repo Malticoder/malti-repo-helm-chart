@@ -1,1 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "wordpress-app.fullname" . }}-nginx
+  labels:
+    app: nginx
+    {{- include "wordpress-app.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.nginx.replicaCount }}
+  selector:
+    matchLabels:
+      app: nginx
+      {{- include "wordpress-app.selectorLabels" . | nindent 6 }}
+
+  template:
+    metadata:
+      labels:
+        app: nginx
+        {{- include "wordpress-app.selectorLabels" . | nindent 8 }}
+      annotations:
+        {{- if .Values.nginx.metrics.enabled }}
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "{{ .Values.nginx.metrics.path }}"
+        prometheus.io/port: "{{ .Values.nginx.metrics.port }}"
+        {{- end }}
+
+    spec:
+      containers:
+      - name: nginx
+        image: {{ .Values.nginx.image }}
+        imagePullPolicy: IfNotPresent
+
+        ports:
+        - containerPort: 80
+          name: http
+
+        volumeMounts:
+        - name: nginx-conf
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+
+        - name: lua-scripts
+          mountPath: /etc/nginx/lua
+
+        resources:
+{{ toYaml .Values.nginx.resources | indent 12 }}
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+      volumes:
+      - name: nginx-conf
+        configMap:
+          name: {{ include "wordpress-app.fullname" . }}-nginx-conf
+          items:
+          - key: nginx.conf
+            path: nginx.conf
+
+      - name: lua-scripts
+        configMap:
+          name: {{ include "wordpress-app.fullname" . }}-lua-scripts
 
