@@ -71,7 +71,7 @@ spec:
 
         livenessProbe:
           exec:
-            command: ["mysqladmin", "ping", "-h", "127.0.0.1"]
+            command: ["mysqlmalti", "ping", "-h", "127.0.0.1"]
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
