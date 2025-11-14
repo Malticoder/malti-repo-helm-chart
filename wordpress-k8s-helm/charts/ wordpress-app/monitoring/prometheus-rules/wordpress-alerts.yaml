@@ -1,1 +1,27 @@
+groups:
+- name: wordpress.rules
+  rules:
+  - alert: HighPodCPU
+    expr: sum by (pod)(rate(container_cpu_usage_seconds_total{pod=~"wordpress-.*"}[5m])) > 0.8
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High CPU usage on {{ $labels.pod }}"
+
+  - alert: NginxHigh5xxRate
+    expr: rate(nginx_requests_total{status=~"5.."}[5m]) > 0.05
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "High 5xx rate for nginx"
+
+  - alert: WPUploadsPVCFull
+    expr: (kubelet_volume_used_bytes / kubelet_volume_capacity_bytes) * 100 > 85
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Persistent volume almost full"
 
