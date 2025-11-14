@@ -1,1 +1,0 @@
-# malti-repo-helm-chart
