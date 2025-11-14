@@ -1,1 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wp-uploads
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-client  
+  resources:
+    requests:
+      storage: 20Gi
 
