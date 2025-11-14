@@ -1,1 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "wordpress-app.fullname" . }}-wp
+spec:
+  replicas: {{ .Values.wordpress.replicas }}
+  selector:
+    matchLabels:
+      app: wordpress
+  template:
+    metadata:
+      labels: { app: wordpress }
+      annotations:
+        prometheus.io/scrape: "false"
+    spec:
+      containers:
+      - name: wordpress
+        image: {{ .Values.wordpress.image }}
+        ports:
+        - containerPort: 9000
+        volumeMounts:
+        - name: wp-uploads
+          mountPath: /var/www/html/wp-content/uploads
+        env:
+        - name: WORDPRESS_DB_HOST
+          value: {{ .Values.mysql.host }}
+        - name: WORDPRESS_DB_USER
+          valueFrom:
+            secretKeyRef: { name: mysql-secret, key: user }
+      volumes:
+      - name: wp-uploads
+        persistentVolumeClaim:
+          claimName: wp-uploads
 
