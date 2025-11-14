@@ -1,1 +1,33 @@
+apiVersion: v2
+name: wordpress-stack
+description: >
+  Production-grade WordPress deployment using Kubernetes, including:
+  - WordPress Deployment
+  - MySQL StatefulSet with RWO PVC
+  - Nginx (OpenResty) reverse-proxy with Lua scripting
+  - Prometheus-compatible annotations for metrics scraping.
+type: application
+
+version: 1.0.0          # Chart version
+appVersion: "1.0.0"     # App version of your stack
+
+home: https://github.com/Malticoder/malti-repo-helm-chart.git
+sources:
+  - https://github.com/Malticoder/malti-repo-helm-chart.git
+
+maintainers:
+  - name: Malti Chachra
+    email: maltichachra684@gmail.com
+
+keywords:
+  - wordpress
+  - nginx
+  - openresty
+  - lua
+  - mysql
+  - kubernetes
+  - helm
+  - prometheus
+
+
 
