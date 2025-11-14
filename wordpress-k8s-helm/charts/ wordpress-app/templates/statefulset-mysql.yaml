@@ -1,1 +1,90 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "wordpress-app.fullname" . }}-mysql
+  labels:
+    app: mysql
+    {{- include "wordpress-app.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "wordpress-app.fullname" . }}-mysql-hl
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+      {{- include "wordpress-app.selectorLabels" . | nindent 6 }}
+
+  template:
+    metadata:
+      labels:
+        app: mysql
+        {{- include "wordpress-app.selectorLabels" . | nindent 8 }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9104"   # if using mysql_exporter
+    spec:
+      securityContext:
+        fsGroup: 999
+      containers:
+      - name: mysql
+        image: {{ .Values.mysql.image }}
+        imagePullPolicy: IfNotPresent
+
+        env:
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "wordpress-app.fullname" . }}-mysql-secret
+              key: database
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "wordpress-app.fullname" . }}-mysql-secret
+              key: user
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "wordpress-app.fullname" . }}-mysql-secret
+              key: password
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "wordpress-app.fullname" . }}-mysql-secret
+              key: rootPassword
+
+        ports:
+        - containerPort: 3306
+          name: mysql
+
+        volumeMounts:
+        - name: mysql-data
+          mountPath: /var/lib/mysql
+
+        resources:
+{{ toYaml .Values.mysql.resources | indent 12 }}
+
+        readinessProbe:
+          exec:
+            command: ["mysqladmin", "ping", "-h", "127.0.0.1"]
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+
+        livenessProbe:
+          exec:
+            command: ["mysqladmin", "ping", "-h", "127.0.0.1"]
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+
+      
+
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: {{ .Values.mysql.storage.storageClass }}
+      resources:
+        requests:
+          storage: {{ .Values.mysql.storage.size }}
 
